@@ -1,0 +1,42 @@
+trigger:
+  branches:
+    exclude:
+      - '*'
+
+pr:
+  branches:
+    exclude:
+      - '*'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- script: |
+    echo '##vso[task.prependpath]/usr/local/bin:/usr/bin:/bin:/usr/games'
+  displayName: 'Add /usr/local/bin to PATH'
+
+- task: UseDotNet@2
+  inputs:
+    version: '3.x'
+    packageType: 'runtime'
+
+- script: |
+    docker build -t multiplication-table-app .
+  displayName: 'Build Docker Image'
+
+- task: Docker@2
+  inputs:
+    command: 'login'
+    containerRegistry: 'dockerhub'
+    displayName: 'Docker Login'
+    env:
+      DOCKERHUB_USERNAME: $(DOCKERHUB_USERNAME)
+      DOCKERHUB_PASSWORD: $(DOCKERHUB_PASSWORD)
+
+- task: Docker@2
+  inputs:
+    command: 'push'
+    repository: 'yourdockerhubusername/multiplication-table-app'
+    tag: 'latest'
+  displayName: 'Push Docker Image to Docker Hub'
